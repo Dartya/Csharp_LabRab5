@@ -12,11 +12,36 @@
 
 namespace Csharp_LabRab5
 {
+    struct Point
+    {
+        public int x_coord, y_coord;           //координаты точек x и y
+        
+        public void info() {
+            Console.WriteLine($"x = {x_coord}, y = {y_coord}.");    
+            //обращаем внимание на то, что при использовании в индексируемых местозаполнителях полей структуры, перед фиксированным текстом необходимо поставить символ "$".
+        }
+    }
+
     class Program
     {
         static void Main(string[] args)
         {
-
+            //ЗАДАНИЕ 1
+            try
+            {
+                Point p = new Point();
+                p.x_coord = 2;
+                p.y_coord = 3;
+                p.info();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+            }
+            finally {
+                Console.WriteLine("<Press any button...>");
+                Console.ReadKey();
+            }
         }
     }
 }
