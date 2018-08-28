@@ -22,6 +22,36 @@ namespace Csharp_LabRab5
         }
     }
 
+    public class MyStack<T> {       //класс стека. <T> указывает на то, что клсс является обобщенным, и T далее будет использоваться как тип данных при работе с данными
+        private T[] elements;       //объявление массива типа T, сюда будут складываться элементы стека
+        private int count;          //указатель на элемент массива
+
+        public MyStack() {
+            elements = new T[1];    //инициаллизация массива элементов
+            count = 0;              //инициализация счетчика
+        }
+
+        public void push(T element) {                           //метод помещения нового элемента в массив
+            elements[count] = element;                          //помещаем новый элемент в массив с текущим указателем на индекс 
+            Console.WriteLine("В стек помещен элемент {0}, его № {1}.", elements[count], count);
+            count++;                                            //инкрементируем указатель на элемент массива
+            Array.Resize(ref elements, elements.Length + 1);    //т.к. Array не является динамическим, то используем метод Resize для задания новой границы массива
+        }
+
+        public void showMyStack() {                             //метод вывода элементов стека в консоль
+            for (int i = 0; i < count; i++)
+                Console.WriteLine("Элемент стека №{0} - {1}", i, elements[i]);
+        }
+
+        public string pull() {                                  //метод извлечения нового элемента в массив, будем конвертировать в строку
+            string result;
+            count--;                                            //декрементируем указатель на элемент массива
+            result = ("Извлекается элемент стека "+Convert.ToString(elements[count])+", его № "+(count)+".");
+            Array.Resize(ref elements, elements.Length - 1);
+            return result;
+        }
+    }
+
     class Program
     {
         static void Main(string[] args)
@@ -33,6 +63,22 @@ namespace Csharp_LabRab5
                 p.x_coord = 2;
                 p.y_coord = 3;
                 p.info();
+
+                //первая реализация обобщенного класса стека - целочисленная
+                MyStack<int> Mstack = new MyStack<int>();       //создаем новый стек, задаем тип <int>
+                Mstack.push(p.x_coord);                         //занесем в него координаты из реализованной структуры
+                Mstack.push(p.y_coord);
+                Mstack.showMyStack();                           //выведем элементы стека на экран
+                Console.WriteLine(Mstack.pull());               //и достанем элементы из стека
+                Console.WriteLine(Mstack.pull());               //и еще раз
+
+                //еще одна реализация обобщенного класса стека - булевая
+                bool b1 = true;                                 //для чистоты эксперимента объявим и инициализируем булевую переменную b1 с значением true
+                MyStack<bool> boolStack= new MyStack<bool>();   //создаем новый стек, задаем тип <bool>
+                boolStack.push(b1);                             //заносим в него первую переменную b1
+                boolStack.push((p.x_coord>p.y_coord));          //и результат проверки условия 
+                boolStack.showMyStack();                        //распечатаем и посмотрим, что будет хранить стек
+
             }
             catch (Exception e)
             {
