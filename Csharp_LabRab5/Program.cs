@@ -55,21 +55,29 @@ namespace Csharp_LabRab5{
         Russia = 1,
         USA,
         EU
-    };    
+    };
 
-    public abstract class FinInstrument {   //абстрактный класс для задания 3
+    interface FinInfo {
+       void printInfo();
+    }
+
+    public abstract class FinInstrument : FinInfo  {   //абстрактный класс для задания 3. мое дополнение - имплементация интерфейса FinInfo и реализация его метода
         //СТРУКТУРА ДАННЫХ
-        enum Currency { RUB = 1, USD, EUR };    //перечисление валют, в которых торгуется финансовый инструмент
-        decimal? current_price, lowest_price, highest_price; //"?" после типа значения указывает на то, что поле содержит значение null. Эквивалентно System.Nullable<T>, где T - тип значения
-        string ticker;      //тикер             //напр. GOOG
-        string name;        //имя инструмента   //напр. Alphabet inc. class C
+        public enum Currency { RUB = 1, USD, EUR };    //перечисление валют, в которых торгуется финансовый инструмент
+        decimal? price, lowest_price, highest_price; //"?" после типа значения указывает на то, что поле содержит значение null. Эквивалентно System.Nullable<T>, где T - тип значения
         string issuer;      //эмитент           //напр. Alphabet inc.
-        Currency nati_curr; //в какой нацвалюте торгуется инструмент
+        public Currency nati_curr; //в какой нацвалюте торгуется инструмент
         Country country;    //страна-эмитент
+
+        public string Ticker { get => ticker; set => ticker = value; } //следим за пальцами: это имя свойства, реализующего методы доступа (аксессоры) get и set/ 
+        string ticker;//тикер             //напр. GOOG                 //а это - инкапсулируемое свойством поле
+
+        public string Name { get => name; set => name = value; }
+        string name;        //имя инструмента   //напр. Alphabet inc. class C
 
         /*Свойство — это член, предоставляющий гибкий механизм для чтения, записи или вычисления значения частного поля. Свойства можно использовать, как если бы они были членами общих данных, но фактически они представляют 
         собой специальные методы, называемые методами доступа. Это позволяет легко получать доступ к данным и помогает повысить безопасность и гибкость методов.*/
-        string issuer_country { get; set; }     //страна эмитента; автоматическое реализуемое свойство с методами доступа get и set
+        string issuer_country { get; set; }     //страна эмитента; автоматическое реализуемое свойство с методами доступа get и set (ПОЛЕ СОЗДАНО ДЛЯ ПРИМЕРА)
         public string Issuer                    //еще одна реализация свойства c методами доступа get и set
         {
             get => issuer;                      //получаем имя эмитента по обращению *имя объекта*.Issuer
@@ -110,8 +118,83 @@ namespace Csharp_LabRab5{
             this.ticker = ticker;       //такой способ можно использовать для самописных методов доступа get и set. здесь же стоит упомянуть, что через super. можно получить доступ к значению поля не объекта, а суперкласса
         }
 
-        //МЕТОДЫ
+        //здесь я бы расположил индексатор, если бы имелась какая-либо внятная и адекватная сущность, которую стоило бы реализовать с помощью массива. Вместо этого 
 
+        //МЕТОДЫ
+        public abstract void printInfo();   //в абстрактном классе метод имплементируемого интерфейса реализуется абстрактно - т.е. о самом методе упоминание есть, но конкретной реализации нет.
+    }
+
+    class Stock : FinInstrument {           //класс акция - наследник класса финансовый инструмент
+        public Stock(string issuer, string ticker) {//конструктор класса Stock
+            Ticker = ticker;
+            Issuer = issuer;
+        }
+        public Stock(string name, string issuer, string ticker)
+        {//конструктор класса Stock
+            Name = name;
+            Ticker = ticker;
+            Issuer = issuer;
+        }
+
+        override public void printInfo() {  //реализация метода printInfoprintInfo имплементированного классом FinInstrument интерфейса FinInfo
+            Console.WriteLine("Информация о ценной бумаге компании {0}: эмитент {1}, тикер {2}, торгуется в {3}", Name, Issuer, Ticker, this.nati_curr);
+        }
+    }                 
+
+    class Currency : FinInstrument          {//класс валюта - наследник класса финансовый инструмент
+        override public void printInfo()
+        {  //реализация метода printInfoprintInfo имплементированного классом FinInstrument интерфейса FinInfo
+            Console.WriteLine("Информация о валюте {0}: эмитент {1}, тикер {2}.", Name, Issuer, Ticker);
+        }
+    }              
+
+    class CryptoCurrency : Currency { }             //класс криптовалюта - наследник класса валюта
+
+    class ETF : FinInstrument {                     //класс ETF - наследник класса финансовый инструмент, содержащий массив - портфель разных акций.
+
+        Stock[] stockPortfolio;
+
+        //КОНСТРУКТОР
+        public ETF(string name, int howStocks) {
+            stockPortfolio = new Stock[howStocks];  //задание границ массива Stock
+            Name = name;
+            Console.WriteLine("ETF "+name+" создан, помещено {0} акций в портфель.", howStocks);
+        }
+        
+        //ИНДЕКСАТОР ПО НОМЕРУ
+        public Stock this[int index] {
+
+            get {
+                return stockPortfolio[index];
+            }
+            set {
+                stockPortfolio[index] = value;
+            }
+        }
+
+        //ИНДЕКСАТОР ПО ТИКЕРУ АКЦИИ - ФАКТИЧЕСКИ ПЕРЕГРУЖЕННЫЙ ИНДЕКСАТОР
+        public Stock this[string isticker]
+        {
+            get
+            {
+                Stock stock = null;
+                foreach (var p in stockPortfolio)   //вот и реализация foreach - для каждого следующего p в массиве stockPortfolio. по в данном перегруженном аксессоре происходит поиск 
+                                                    //по элементам массива методом перебора каждого и сравнения значений параметра с полем элемента массива
+                {
+                    if (p?.Ticker == isticker)      //, где p? - p-й элемент массива акций Stock stockPortfolio. ВОПРОС - а как ticker оставить сокрытым? ОТВЕТ - а с помощью быстрых действий инкапсулируем ticker и создаем свойство Ticker
+                    {                               //кстати, далее по тексту ticker везде заменится на свойство Ticker. неплохо, MSFT, но нахрен не нужно - генерирование геттеров и сеттеров в Java намного проще и удобнее
+                        stock = p;                  //ссылочному типу stock присвоить значение очередного элемента p
+                        break;
+                    }
+                }
+                return stock;                       //и вернуть как результат Stock stock
+            }
+        }
+        //МЕТОД
+        override public void printInfo()
+        {  //реализация метода printInfoprintInfo имплементированного классом FinInstrument интерфейса FinInfo
+            Console.WriteLine("Всего в портфеле ETF фонда {0} находится {1} акций.", Name, stockPortfolio.Length);
+        }
     }
 
     class Program
@@ -141,6 +224,19 @@ namespace Csharp_LabRab5{
                 boolStack.push(b1);                             //заносим в него первую переменную b1
                 boolStack.push((p.x_coord>p.y_coord));          //и результат проверки условия 
                 boolStack.showMyStack();                        //распечатаем и посмотрим, что будет хранить стек
+
+                Console.WriteLine("\n***ЗАДАНИЕ 5***\n");
+                ETF highTech = new ETF("AlexCapital", 5);
+                highTech.printInfo();
+
+                highTech[0] = new Stock("Microsoft inc.", "MSFT");  //результат работы индексатора - можно обращаться к созданному классу hightek[i], где i - индекс (номер) акции (обхекта Stock) в портфеле фонда ETF (массиве класса ETF)
+                highTech[1] = new Stock("nVidia", "nVidia inc.", "NVDA");     //в данных случая по индексной ссылке создается новый объект класса Stock со своими параметрами
+                highTech[0].Name = "Microsoft";                     //запись значенея в инкапсулируемую переменную через сеттер
+
+                Console.WriteLine("Тикер акций {0} - {1}, эмитент {2}", highTech[0].Name, highTech[0].Ticker, highTech[0].Issuer); //результат работы целочисленного индексатора - можно обращаться к акции в портфеле ETF по номеру
+                highTech[0].printInfo();
+                Console.WriteLine("Один из лидеров роста NASDAQ-100 - "+highTech["NVDA"].Issuer);         //результат работы строкового индексатора - можно обращаться к акции в портфеле ETF по тикеру
+                highTech["NVDA"].printInfo();
 
             }
             catch (Exception e)
