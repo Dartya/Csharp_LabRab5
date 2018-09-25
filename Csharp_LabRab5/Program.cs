@@ -1,4 +1,8 @@
 ﻿using System;
+using System.IO;
+using System.Runtime.Serialization;
+//using System.Runtime.Serialization.Formatters.Soap;
+using System.Runtime.Serialization.Formatters.Binary;
 
 /*
   ЗАДАНИЯ:
@@ -60,7 +64,8 @@ namespace Csharp_LabRab5{
     interface FinInfo {
        void printInfo();
     }
-
+    
+    [Serializable()] 
     public abstract class FinInstrument : FinInfo  {   //абстрактный класс для задания 3. мое дополнение - имплементация интерфейса FinInfo и реализация его метода
         //СТРУКТУРА ДАННЫХ
         public enum Currency { RUB = 1, USD, EUR };    //перечисление валют, в которых торгуется финансовый инструмент
@@ -117,17 +122,19 @@ namespace Csharp_LabRab5{
         }
     }
 
+    [Serializable()]    //в примере MSDN приведено написание примера сериализации с "()". Сериализация - процесс упаковки объекта в байт-код. Обратный процесс - десериализация
     class Stock : FinInstrument {           //класс акция - наследник класса финансовый инструмент
         public Stock(string issuer, string ticker) {//конструктор класса Stock
             Ticker = ticker;
             Issuer = issuer;
         }
-        public Stock(string name, string issuer, string ticker)
-        {//конструктор класса Stock
+        public Stock(string name, string issuer, string ticker) {//конструктор класса Stock
             Name = name;
             Ticker = ticker;
             Issuer = issuer;
         }
+
+        [NonSerialized()]public string recommendations; //если какое-либо поле явно не нужно сериализовывать - перед ним ставится атрибут [NonSerialized()]
 
         override public void printInfo() {          //реализация метода printInfoprintInfo имплементированного классом FinInstrument интерфейса FinInfo
             Console.WriteLine("Информация о ценной бумаге компании {0}: эмитент {1}, тикер {2}, торгуется в {3}\n", Name, Issuer, Ticker, this.nati_curr);
@@ -137,6 +144,11 @@ namespace Csharp_LabRab5{
             Console.WriteLine("Акция - это ценная бумага, позволяющая наращивать капитализацию компании, а инвестору - получать ежеквартальный дивидендный доход и рассчитывать на доход от последующей ее продажи.\n");
         }
 
+        public void print(){
+            Console.WriteLine("Name = {0}", Name);
+            Console.WriteLine("Issuer = {0}", Issuer);
+            Console.WriteLine("Ticker = {0}", Ticker);
+        }
         /*override public void showTicker(){          //не обязательное переопределение виртуальной функции 
             Console.WriteLine("Тикер акции - "+Ticker+". По тикеру легко можно найти акцию на информационных порталах.\n");
         }*/
@@ -261,6 +273,26 @@ namespace Csharp_LabRab5{
                 Console.WriteLine("Один из лидеров роста NASDAQ-100 - "+highTech["NVDA"].Issuer+"\n");         //результат работы строкового индексатора - можно обращаться к акции в портфеле ETF по тикеру
                 highTech["NVDA"].printInfo();               //через строковый индексатор также можно обращаться к объекту класса Stock через объект класса ETF и вызывать нужный метод.
                 highTech["NVDA"].showInstrumentInfo();      //вызов переопределенного метода, изначально объявленного как абстрактный в абстрактном классе-предке FinInstrument
+
+                //СЕРИАЛИЗАЦИЯ
+                Stock aapl = new Stock("Apple", "Apple inc.", "AAPL");
+                Console.WriteLine("\nДо сериализации объект содержит:\n");
+                aapl.print();
+                //далее как в примере
+                Stream stream = File.Open("data.xml", FileMode.Create);
+                BinaryFormatter formatter = new BinaryFormatter();
+
+                formatter.Serialize(stream, aapl);
+                stream.Close();
+                aapl = null;
+
+                stream = File.Open("data.xml", FileMode.Open);
+                formatter = new BinaryFormatter();
+                aapl = (Stock)formatter.Deserialize(stream);
+                stream.Close();
+                Console.WriteLine("");
+                Console.WriteLine("After deserialization the object contains: ");
+                aapl.print();
             }
             catch (Exception e)
             {
