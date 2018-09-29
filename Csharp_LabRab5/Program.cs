@@ -1,8 +1,9 @@
 ﻿using System;
 using System.IO;
 using System.Runtime.Serialization;
-//using System.Runtime.Serialization.Formatters.Soap;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Collections;
+using System.Collections.Generic;
 
 /*
   ЗАДАНИЯ:
@@ -109,9 +110,7 @@ namespace Csharp_LabRab5{
             this.issuer = issuer;       //через this инкапсулируется значение поля именно данного экземпляра объекта, который создается настоящим конструктором
             this.ticker = ticker;       //такой способ можно использовать для самописных методов доступа get и set. здесь же стоит упомянуть, что через super. можно получить доступ к значению поля не объекта, а суперкласса
         }
-
-        //здесь я бы расположил индексатор, если бы имелась какая-либо внятная и адекватная сущность, которую стоило бы реализовать с помощью массива.
-
+        
         //МЕТОДЫ
         public abstract void printInfo();   //в абстрактном классе метод имплементируемого интерфейса реализуется абстрактно - т.е. о самом методе упоминание есть, но конкретной реализации нет.
 
@@ -152,7 +151,6 @@ namespace Csharp_LabRab5{
         /*override public void showTicker(){          //не обязательное переопределение виртуальной функции 
             Console.WriteLine("Тикер акции - "+Ticker+". По тикеру легко можно найти акцию на информационных порталах.\n");
         }*/
-
     }                 
 
     class Currency : FinInstrument          {//класс валюта - наследник класса финансовый инструмент
@@ -167,7 +165,7 @@ namespace Csharp_LabRab5{
         }
     }              
 
-    class CryptoCurrency : Currency { }             //класс криптовалюта - наследник класса валюта
+    class CryptoCurrency : Currency { }     //класс криптовалюта - наследник класса валюта
 
     class ETF : FinInstrument {                     //класс ETF - наследник класса финансовый инструмент, содержащий массив - портфель разных акций.
 
@@ -201,7 +199,7 @@ namespace Csharp_LabRab5{
                                                     //по элементам массива методом перебора каждого и сравнения значений параметра с полем элемента массива
                 {
                     if (p?.Ticker == isticker)      //, где p? - p-й элемент массива акций Stock stockPortfolio. ВОПРОС - а как ticker оставить сокрытым? ОТВЕТ - а с помощью быстрых действий инкапсулируем ticker и создаем свойство Ticker
-                    {                               //кстати, далее по тексту ticker везде заменится на свойство Ticker. неплохо, MSFT, но нахрен не нужно - генерирование геттеров и сеттеров в Java намного проще и удобнее
+                    {                               //кстати, далее по тексту ticker везде заменится на свойство Ticker. 
                         stock = p;                  //ссылочному типу stock присвоить значение очередного элемента p
                         break;
                     }
@@ -254,6 +252,8 @@ namespace Csharp_LabRab5{
                 boolStack.showMyStack();                        //распечатаем и посмотрим, что будет хранить стек
 
                 Console.WriteLine("\n***ЗАДАНИЕ 5***\n");
+
+                //ИНДЕКСАТОРЫ
                 ETF highTech = new ETF("AlexCapital", 5);
                 highTech.printInfo();
                 highTech.showInstrumentInfo();
@@ -261,18 +261,19 @@ namespace Csharp_LabRab5{
                 highTech[0] = new Stock("Microsoft inc.", "MSFT");  //результат работы индексатора - можно обращаться к созданному классу hightek[i], где i - индекс (номер) акции (обхекта Stock) в портфеле фонда ETF (массиве класса ETF)
                 highTech[1] = new Stock("nVidia", "nVidia inc.", "NVDA");     //в данных случая по индексной ссылке создается новый объект класса Stock со своими параметрами
                 highTech[0].Name = "Microsoft";                     //запись значенея в инкапсулируемую переменную через сеттер
+                
+                Console.WriteLine("\nТеперь будем играть с индексаторами класса Stock:\nТикер акций {0} - {1}, эмитент {2}\n", highTech[0].Name, highTech[0].Ticker, highTech[0].Issuer); //результат работы целочисленного индексатора - можно обращаться к акции в портфеле ETF по номеру
+                highTech[0].printInfo();    //этот метод имплементирован абстрактным классом FinInstrument, от которого унаследован Stock, в котором метод интерфейса переопределен - так и вызывается
+                Console.WriteLine("Один из лидеров роста NASDAQ-100 - "+highTech["NVDA"].Issuer+"\n");  //результат работы строкового индексатора - можно обращаться к акции в портфеле ETF по тикеру
+                highTech["NVDA"].printInfo();               //через строковый индексатор также можно обращаться к объекту класса Stock через объект класса ETF и вызывать нужный метод.
+                highTech["NVDA"].showInstrumentInfo();      //вызов переопределенного метода, изначально объявленного как абстрактный в абстрактном классе-предке FinInstrument
 
+                //ВИРТУАЛЬНЫЕ МЕТОДЫ
                 Console.WriteLine("Поговорим о виртуальном методе.\nВ абстрактном классе существует виртуальный метод public virtual void showTicker(). \nВ классах-наследниках его можно переопределить через override:\n");
                 highTech.showTicker();      //выхов переопределенной классом ETF виртуальной функции
                 highTech.showTicker(2);     //вызов перегруженной переопределенной классом ETF виртуальной функции
                 Console.WriteLine("Cтандартная реализация метода public virtual void showTicker() может быть вызвана наследуемым объектом, класс которого не переопределял данный метод, как Stock:");
                 highTech[1].showTicker();   //вызов объектом класса Stock виртуальной функции абстрактного класса
-
-                Console.WriteLine("\nТеперь будем играть с индексаторами класса Stock:\nТикер акций {0} - {1}, эмитент {2}\n", highTech[0].Name, highTech[0].Ticker, highTech[0].Issuer); //результат работы целочисленного индексатора - можно обращаться к акции в портфеле ETF по номеру
-                highTech[0].printInfo();    //этот метод имплементирован абстрактным классом FinInstrument, от которого унаследован Stock, в котором метод интерфейса переопределен - так и вызывается
-                Console.WriteLine("Один из лидеров роста NASDAQ-100 - "+highTech["NVDA"].Issuer+"\n");         //результат работы строкового индексатора - можно обращаться к акции в портфеле ETF по тикеру
-                highTech["NVDA"].printInfo();               //через строковый индексатор также можно обращаться к объекту класса Stock через объект класса ETF и вызывать нужный метод.
-                highTech["NVDA"].showInstrumentInfo();      //вызов переопределенного метода, изначально объявленного как абстрактный в абстрактном классе-предке FinInstrument
 
                 //СЕРИАЛИЗАЦИЯ
                 Stock aapl = new Stock("Apple", "Apple inc.", "AAPL");
@@ -293,6 +294,9 @@ namespace Csharp_LabRab5{
                 Console.WriteLine("");
                 Console.WriteLine("After deserialization the object contains: ");
                 aapl.print();
+
+                List<int> list = new List<int>();
+                Stock[] alist = new Stock[5];
             }
             catch (Exception e)
             {
